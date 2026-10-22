@@ -43,11 +43,26 @@ enum ConditionCode {
   lightSnowShowers(368, 'Light snow showers'),
   moderateOrHeavySnowShowers(371, 'Moderate or heavy snow showers'),
   lightShowersOfIcePellets(374, 'Light showers of ice pellets'),
-  moderateOrHeavyShowersOfIcePellets(377, 'Moderate or heavy showers of ice pellets'),
-  patchyLightRainInAreaWithThunder(386, 'Patchy light rain in area with thunder'),
-  moderateOrHeavyRainInAreaWithThunder(389, 'Moderate or heavy rain in area with thunder'),
-  patchyLightSnowInAreaWithThunder(392, 'Patchy light snow in area with thunder'),
-  moderateOrHeavySnowInAreaWithThunder(395, 'Moderate or heavy snow in area with thunder');
+  moderateOrHeavyShowersOfIcePellets(
+    377,
+    'Moderate or heavy showers of ice pellets',
+  ),
+  patchyLightRainInAreaWithThunder(
+    386,
+    'Patchy light rain in area with thunder',
+  ),
+  moderateOrHeavyRainInAreaWithThunder(
+    389,
+    'Moderate or heavy rain in area with thunder',
+  ),
+  patchyLightSnowInAreaWithThunder(
+    392,
+    'Patchy light snow in area with thunder',
+  ),
+  moderateOrHeavySnowInAreaWithThunder(
+    395,
+    'Moderate or heavy snow in area with thunder',
+  );
 
   /// Number code WWO.
   final int code;
@@ -61,5 +76,8 @@ enum ConditionCode {
     return null;
   }
 
-  bool get isClear => this == sunny;
+  Map<String, dynamic> toMap() => {'code': code, 'description': description};
+
+  static List<Map<String, dynamic>> dictionary() =>
+      ConditionCode.values.map((element) => element.toMap()).toList();
 }

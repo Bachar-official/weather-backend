@@ -11,6 +11,9 @@ dependencies:
   shelf_router: ^1.1.2
   dotenv: ^4.2.0
   dio: ^5.11.1
+  shelf_cors_headers: ^0.1.5
+  cron: ^0.6.2
+  logger: ^2.8.0
 
 dev_dependencies:
   http: ^1.2.2

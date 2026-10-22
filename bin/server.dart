@@ -1,36 +1,30 @@
 import 'dart:io';
 
+import 'package:logger/logger.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
-import 'package:shelf_router/shelf_router.dart';
-import 'package:dotenv/dotenv.dart';
-
-// Configure routes.
-final _router = Router()
-  ..get('/', _rootHandler)
-  ..get('/echo/<message>', _echoHandler);
-
-Response _rootHandler(Request req) {
-  return Response.ok('Hello, World!\n');
-}
-
-Response _echoHandler(Request request) {
-  final message = request.params['message'];
-  return Response.ok('$message\n');
-}
+import 'package:shelf_cors_headers/shelf_cors_headers.dart';
+import 'package:weather_backend/service/service.dart';
 
 void main() async {
-  // Use any available host or container IP (usually `0.0.0.0`).
+  final env = EnvService().getEnvironment();
+  final netRepo = NetRepo(env: env);
+  final logger = Logger();
+  final updateService = UpdateService(netRepo: netRepo, environment: env, logger: logger);
   final ip = InternetAddress.anyIPv4;
-  final env = DotEnv(includePlatformEnvironment: true)..load();
-  print(env['CITY']);
-  // Configure a pipeline that logs requests.
-  final handler = Pipeline()
-      .addMiddleware(logRequests())
-      .addHandler(_router.call);
 
-  // For running in containers, we respect the PORT environment variable.
-  final port = int.parse(Platform.environment['PORT'] ?? '8080');
+  final handler = Pipeline()
+      .addMiddleware(corsHeaders())
+      .addMiddleware(logRequests(logger: (message, isError) {
+        if (isError) {
+          logger.e(message);
+        } else {
+          logger.i(message);
+        }
+      }))
+      .addHandler(updateService.router.call);
+
+  final port = env.port;
   final server = await serve(handler, ip, port);
-  print('Server listening on port ${server.port}');
+  logger.i('Server listening on port ${server.port}');
 }

@@ -1,5 +1,5 @@
 import 'package:dotenv/dotenv.dart';
-import 'package:weather_backend/entity/environment.dart';
+import 'package:weather_backend/entity/entity.dart';
 
 abstract class EnvFields {
   static const city = 'CITY';
@@ -9,6 +9,7 @@ abstract class EnvFields {
   static const pressureUnit = 'PRESSURE_UNIT';
   static const units = 'UNITS';
   static const port = 'PORT';
+  static const cronSchedule = 'CRON_SCHEDULE';
 }
 
 class EnvService {
@@ -34,6 +35,7 @@ class EnvService {
     final cloudflareAccountId = _env[EnvFields.cloudflareAccountId];
     final cloudflareToken = _env[EnvFields.cloudflareToken];
     final port = int.parse(_require(EnvFields.port));
+    final cronSchedule = _require(EnvFields.cronSchedule);
 
     return Environment(
       city: city,
@@ -43,6 +45,7 @@ class EnvService {
       cloudflareAccountId: cloudflareAccountId,
       cloudflareToken: cloudflareToken,
       port: port,
+      cronSchedule: cronSchedule,
     );
   }
 }

@@ -5,6 +5,7 @@ class Environment {
   final String? cloudflareToken;
   final String pressureUnit;
   final String units;
+  final String cronSchedule;
   final int port;
 
   const Environment({
@@ -15,5 +16,9 @@ class Environment {
     this.cloudflareAccountId,
     this.cloudflareToken,
     required this.port,
+    required this.cronSchedule,
   });
+
+  bool get isMetric => units == 'metric';
+  bool get isCloudflareFeaturesEnabled => cloudflareAccountId != null && cloudflareAccountId != null;
 }

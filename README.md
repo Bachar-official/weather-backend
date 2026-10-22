@@ -1,6 +1,7 @@
 # weather-backend
-Backend with weather data written on Dart
+Calendar Backend written on Dart.
 
 ## Data sources
 - Weather: service wttr.in
 - Image generation: Cloudflare worker
+- Holidays: Wikipedia
