@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart';
 import 'package:shelf_router/shelf_router.dart';
+import 'package:dotenv/dotenv.dart';
 
 // Configure routes.
 final _router = Router()
@@ -18,10 +19,11 @@ Response _echoHandler(Request request) {
   return Response.ok('$message\n');
 }
 
-void main(List<String> args) async {
+void main() async {
   // Use any available host or container IP (usually `0.0.0.0`).
   final ip = InternetAddress.anyIPv4;
-
+  final env = DotEnv(includePlatformEnvironment: true)..load();
+  print(env['CITY']);
   // Configure a pipeline that logs requests.
   final handler = Pipeline()
       .addMiddleware(logRequests())

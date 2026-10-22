@@ -9,6 +9,8 @@ environment:
 dependencies:
   shelf: ^1.4.2
   shelf_router: ^1.1.2
+  dotenv: ^4.2.0
+  dio: ^5.11.1
 
 dev_dependencies:
   http: ^1.2.2
