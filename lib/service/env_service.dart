@@ -10,6 +10,7 @@ abstract class _EnvFields {
   static const port = 'PORT';
   static const cronSchedule = 'CRON_SCHEDULE';
   static const weatherApiToken = 'WEATHERAPI_TOKEN';
+  static const area = 'AREA';
 }
 
 class EnvService {
@@ -36,6 +37,7 @@ class EnvService {
     final cloudflareToken = _env[_EnvFields.cloudflareToken];
     final port = int.parse(_require(_EnvFields.port));
     final cronSchedule = _require(_EnvFields.cronSchedule);
+    final area = _env[_EnvFields.area];
 
     return Environment(
       city: city,
@@ -46,6 +48,7 @@ class EnvService {
       cloudflareToken: cloudflareToken,
       port: port,
       cronSchedule: cronSchedule,
+      area: area,
     );
   }
 }

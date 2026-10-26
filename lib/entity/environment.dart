@@ -3,6 +3,7 @@ class Environment {
   final String locale;
   final String? cloudflareAccountId;
   final String? cloudflareToken;
+  final String? area;
   final String units;
   final String cronSchedule;
   final String weatherApiToken;
@@ -14,11 +15,12 @@ class Environment {
     required this.units,
     this.cloudflareAccountId,
     this.cloudflareToken,
+    this.area,
     required this.port,
     required this.cronSchedule,
     required this.weatherApiToken,
   });
 
   bool get isMetric => units == 'metric';
-  bool get isCloudflareFeaturesEnabled => cloudflareAccountId != null && cloudflareAccountId != null;
+  bool get isCloudflareFeaturesEnabled => cloudflareAccountId != null && cloudflareAccountId != null && area != null;
 }

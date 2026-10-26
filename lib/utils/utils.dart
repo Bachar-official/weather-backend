@@ -32,4 +32,16 @@ abstract class Utils {
     final cur = t.hour * 60 + t.minute;
     return cur >= sr && cur < ss;
   }
+
+  static String formatTimeAmPm(DateTime dateTime, {String separator = ' '}) {
+    final hour24 = dateTime.hour;
+    final minute = dateTime.minute;
+
+    final period = hour24 >= 12 ? 'PM' : 'AM';
+    var hour12 = hour24 % 12;
+    if (hour12 == 0) hour12 = 12; // 00:xx -> 12 AM, 12:xx -> 12 PM
+
+    final minuteStr = minute.toString().padLeft(2, '0');
+    return '$hour12:$minuteStr$separator$period';
+  }
 }
