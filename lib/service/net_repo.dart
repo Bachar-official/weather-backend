@@ -31,10 +31,10 @@ class NetRepo {
   }
 
   Future<Weather> getWeather() async {
-    final response = await _dio.get(Constants.weatherUrl(city: env.city, locale: env.locale));
+    final response = await _dio.get(Constants.weatherUrl(city: env.city, locale: env.locale, apiKey: env.weatherApiToken));
     if (response.statusCode == 200) {
-      final wttrMap = jsonDecode(response.data) as Map<String, dynamic>;
-      return Weather.fromWttrMap(wttrMap, env);
+      final wttrMap = response.data as Map<String, dynamic>;
+      return Weather.fromMap(wttrMap, env: env);
     }
     throw Exception('code ${response.statusCode}');
   }

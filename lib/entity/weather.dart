@@ -1,264 +1,153 @@
-import 'package:weather_backend/utils/utils.dart';
-
-import 'environment.dart';
+import 'condition.dart';
 import 'forecast.dart';
+import 'environment.dart';
 
 class Weather {
-  final double temperatureC;
-  final double apparentTemperatureC;
+  /// Температура в единицах, заданных [Environment.units]
+  final double temperature;
+  final double apparentTemperature;
+
   final double humidity;
-  final double windSpeedKmh;
-  final int windDirectionDegrees;
-  final double pressureHpa;
+  final double surfacePressure; // гПа
   final double uvIndex;
+
+  /// Скорость ветра в единицах, заданных [Environment.units] (км/ч или мили/ч)
+  final double windSpeed;
+  /// Направление ветра в градусах (0–360)
+  final int windDegree;
+
+  final Condition condition;
   final bool isDay;
 
-  final int weatherCode;
-  final String condition;
+  final DateTime sunrise;
+  final DateTime sunset;
 
-  final String sunrise; // "HH:mm"
-  final String sunset;  // "HH:mm"
   final List<Forecast> forecast;
 
-  final Environment _env;
-
-  Weather({
-    required this.temperatureC,
-    required this.apparentTemperatureC,
+  const Weather({
+    required this.temperature,
+    required this.apparentTemperature,
     required this.humidity,
-    required this.windSpeedKmh,
-    required this.windDirectionDegrees,
-    required this.pressureHpa,
+    required this.surfacePressure,
     required this.uvIndex,
-    required this.isDay,
-    required this.weatherCode,
+    required this.windSpeed,
+    required this.windDegree,
     required this.condition,
+    required this.isDay,
     required this.sunrise,
     required this.sunset,
     required this.forecast,
+  });
+
+  factory Weather.fromMap(
+    Map<String, dynamic> map, {
     required Environment env,
-  }) : _env = env;
+  }) {
+    final current = map['current'] as Map<String, dynamic>;
+    final forecastData = map['forecast'] as Map<String, dynamic>;
+    final forecastDays = forecastData['forecastday'] as List;
+    final astro = (forecastDays.first as Map<String, dynamic>)['astro']
+        as Map<String, dynamic>;
 
-  factory Weather.fromWttrMap(
-    Map<String, dynamic> map,
-    Environment env,
-  ) {
-    final current =
-        (map['current_condition'] as List).first as Map<String, dynamic>;
-    final days = (map['weather'] as List).cast<Map<String, dynamic>>();
-    final firstDay = days.first;
-    final astro =
-        (firstDay['astronomy'] as List).first as Map<String, dynamic>;
+    final metric = env.isMetric;
 
-    final sunrise = _convertAmPmTo24Hour(astro['sunrise'] as String);
-    final sunset = _convertAmPmTo24Hour(astro['sunset'] as String);
+    // Температура
+    final temp = metric
+        ? (current['temp_c'] as num).toDouble()
+        : (current['temp_f'] as num).toDouble();
+    final feelsLike = metric
+        ? (current['feelslike_c'] as num).toDouble()
+        : (current['feelslike_f'] as num).toDouble();
 
-    // "Сейчас" — реальное локальное время сервера, а не observation_time
-    // (observation_time в wttr.in — время последнего наблюдения и может
-    // отставать на часы из-за кэша).
-    final now = DateTime.now();
+    // Ветер
+    final wind = metric
+        ? (current['wind_kph'] as num).toDouble()
+        : (current['wind_mph'] as num).toDouble();
 
-    // Восход/закат по датам — для корректного isDay в прогнозе через полночь.
-    final sunByDate = <String, ({String sunrise, String sunset})>{};
-    for (final day in days) {
-      final d = day['date'] as String;
-      final a = (day['astronomy'] as List).first as Map<String, dynamic>;
-      sunByDate[d] = (
-        sunrise: _convertAmPmTo24Hour(a['sunrise'] as String),
-        sunset: _convertAmPmTo24Hour(a['sunset'] as String),
-      );
+    // Давление: API отдаёт mb (гПа) и inHg
+    final pressure = metric
+        ? (current['pressure_mb'] as num).toDouble()
+        : (current['pressure_in'] as num).toDouble();
+
+    // Собираем все часовые прогнозы
+    final allHours = <Map<String, dynamic>>[];
+    for (final day in forecastDays) {
+      final hours = (day as Map<String, dynamic>)['hour'] as List;
+      allHours.addAll(hours.cast<Map<String, dynamic>>());
     }
 
-    // Собираем все будущие 3-часовые точки.
-    final points = <Forecast>[];
-    for (final day in days) {
-      final dayDate = DateTime.parse(day['date'] as String);
-      final dayAstro = (day['astronomy'] as List).first as Map<String, dynamic>;
-      final daySunrise = _convertAmPmTo24Hour(dayAstro['sunrise'] as String);
-      final daySunset = _convertAmPmTo24Hour(dayAstro['sunset'] as String);
-
-      for (final h in (day['hourly'] as List).cast<Map<String, dynamic>>()) {
-        final f = Forecast.fromWttrMap(
-          h,
-          date: dayDate,
-          sunrise: daySunrise,
-          sunset: daySunset,
-          locale: env.locale,
-        );
-        if (!f.time.isBefore(now)) points.add(f);
-      }
-    }
-
-    // 12 почасовых записей вперёд (интерполяция между 3-часовыми точками).
-    final next12 = _buildHourlyForecast(
-      points: points,
-      from: now,
-      hours: 12,
-      sunByDate: sunByDate,
+    // Текущее локальное время локации
+    final now = DateTime.parse(
+      (map['location'] as Map<String, dynamic>)['localtime'] as String,
     );
 
-    final windDeg = int.parse(current['winddirDegree'] as String);
+    final next12Forecasts = allHours
+        .map((h) => Forecast.fromMap(h, metric: metric))
+        .where((f) => !f.time.isBefore(now))
+        .take(12)
+        .toList();
 
     return Weather(
-      temperatureC: double.parse(current['temp_C'] as String),
-      apparentTemperatureC: double.parse(current['FeelsLikeC'] as String),
-      humidity: double.parse(current['humidity'] as String),
-      windSpeedKmh: double.parse(current['windspeedKmph'] as String),
-      windDirectionDegrees: windDeg,
-      pressureHpa: double.parse(current['pressure'] as String),
-      uvIndex: double.parse(current['uvIndex'] as String),
-      isDay: Utils.isDay(now, sunrise, sunset),
-      weatherCode: int.parse(current['weatherCode'] as String),
-      condition: Utils.pickLocalizedCondition(current, env.locale),
-      sunrise: sunrise,
-      sunset: sunset,
-      forecast: next12,
-      env: env,
+      temperature: temp,
+      apparentTemperature: feelsLike,
+      humidity: (current['humidity'] as num).toDouble(),
+      surfacePressure: pressure,
+      uvIndex: (current['uv'] as num).toDouble(),
+      windSpeed: wind,
+      windDegree: (current['wind_degree'] as num).toInt() % 360,
+      condition: Condition.fromMap(
+        current['condition'] as Map<String, dynamic>,
+      ),
+      isDay: current['is_day'] == 1,
+      sunrise: _parseAstroTime(astro['sunrise'], now),
+      sunset: _parseAstroTime(astro['sunset'], now),
+      forecast: next12Forecasts,
     );
   }
 
-  // ----- Геттеры для отображения в единицах пользователя -----
-
-  double get temperature =>
-      _env.isMetric ? temperatureC : temperatureC * 9 / 5 + 32;
-
-  double get apparentTemperature => _env.isMetric
-      ? apparentTemperatureC
-      : apparentTemperatureC * 9 / 5 + 32;
-
-  double get windSpeed =>
-      _env.isMetric ? windSpeedKmh : windSpeedKmh / 1.609344;
-
-  double get pressure => _env.isMetric
-      ? pressureHpa * 0.750061683 // гПа → мм рт. ст.
-      : pressureHpa * 0.02953;    // гПа → inHg
-
-  String get temperatureUnit => _env.isMetric ? '°C' : '°F';
-  String get windSpeedUnit => _env.isMetric ? 'км/ч' : 'миль/ч';
-  String get pressureUnit => _env.isMetric ? 'мм рт. ст.' : 'inHg';
-
-  // ----- Serialization -----
-
-  /// Отдаёт значения уже в единицах пользователя (по `_env.isMetric`).
-  /// Рядом с каждым числом — строка единицы измерения.
   Map<String, dynamic> toMap() => {
         'temperature': temperature,
-        'temperatureUnit': temperatureUnit,
         'apparentTemperature': apparentTemperature,
-        'apparentTemperatureUnit': temperatureUnit,
         'humidity': humidity,
-        'windSpeed': windSpeed,
-        'windSpeedUnit': windSpeedUnit,
-        'windDirectionDegrees': windDirectionDegrees,
-        'pressure': pressure,
-        'pressureUnit': pressureUnit,
+        'surfacePressure': surfacePressure,
         'uvIndex': uvIndex,
+        'windSpeed': windSpeed,
+        'windDegree': windDegree,
+        'code': condition.code,
+        'condition': condition.text,
         'isDay': isDay,
-        'weatherCode': weatherCode,
-        'condition': condition,
-        'sunrise': sunrise,
-        'sunset': sunset,
-        'forecast':
-            forecast.map((f) => f.toMap(isMetric: _env.isMetric)).toList(),
+        'sunrise': sunrise.toIso8601String(),
+        'sunset': sunset.toIso8601String(),
+        'forecast': forecast.map((f) => f.toMap()).toList(),
       };
 
   @override
-  String toString() => 'Weather(temp=$temperature$temperatureUnit, '
-      'feels=$apparentTemperature$temperatureUnit, '
-      'wind=$windSpeed$windSpeedUnit, '
-      'pressure=$pressure$pressureUnit, '
-      'uv=$uvIndex, isDay=$isDay, '
-      'weatherCode=$weatherCode, condition="$condition", '
-      'forecast=${forecast.length})';
+  String toString() => 'Weather:\n'
+      'temperature: $temperature\n'
+      'apparentTemperature: $apparentTemperature\n'
+      'humidity: $humidity\n'
+      'surfacePressure: $surfacePressure\n'
+      'uvIndex: $uvIndex\n'
+      'windSpeed: $windSpeed\n'
+      'windDegree: $windDegree\n'
+      'code: ${condition.code}\n'
+      'condition: ${condition.text}\n'
+      'isDay: $isDay\n'
+      'sunrise: $sunrise\n'
+      'sunset: $sunset\n'
+      'forecast has ${forecast.length} records';
 }
 
-// ----- helpers -----
-
-/// Строит почасовой прогноз на [hours] часов вперёд от [from].
-/// Температура интерполируется линейно между 3-часовыми точками,
-/// условия/код берутся от ближайшей точки, isDay — по восходу/закату
-/// соответствующей даты.
-List<Forecast> _buildHourlyForecast({
-  required List<Forecast> points,
-  required DateTime from,
-  required int hours,
-  required Map<String, ({String sunrise, String sunset})> sunByDate,
-}) {
-  if (points.isEmpty) return const [];
-
-  // Начинаем с ближайшего целого часа после `from`.
-  var cursor = DateTime(from.year, from.month, from.day, from.hour)
-      .add(const Duration(hours: 1));
-
-  final result = <Forecast>[];
-  for (var i = 0; i < hours; i++) {
-    Forecast? p0;
-    Forecast? p1;
-    for (final p in points) {
-      if (!p.time.isAfter(cursor)) {
-        p0 = p;
-      } else {
-        p1 = p;
-        break;
-      }
-    }
-    if (p0 == null && p1 == null) break;
-
-    final double tempC;
-    if (p0 == null) {
-      tempC = p1!.temperatureC;
-    } else if (p1 == null) {
-      tempC = p0.temperatureC;
-    } else {
-      final total = p1.time.difference(p0.time).inMinutes;
-      final passed = cursor.difference(p0.time).inMinutes;
-      final t = total == 0 ? 0.0 : passed / total;
-      tempC = p0.temperatureC + (p1.temperatureC - p0.temperatureC) * t;
-    }
-
-    final nearest = _nearest(points, cursor);
-    final dateKey = _dateKey(cursor);
-    final sun = sunByDate[dateKey] ??
-        (sunByDate.values.isNotEmpty ? sunByDate.values.first : null);
-
-    result.add(Forecast(
-      time: cursor,
-      temperatureC: tempC,
-      weatherCode: nearest.weatherCode,
-      condition: nearest.condition,
-      isDay: sun != null ? Utils.isDay(cursor, sun.sunrise, sun.sunset) : false,
-    ));
-
-    cursor = cursor.add(const Duration(hours: 1));
+DateTime _parseAstroTime(dynamic raw, DateTime reference) {
+  final s = raw as String; // "06:15 AM"
+  final match = RegExp(r'(\d{1,2}):(\d{2})\s*(AM|PM)').firstMatch(s);
+  if (match == null) {
+    throw FormatException('Unexpected astro time: $s');
   }
-  return result;
-}
-
-Forecast _nearest(List<Forecast> points, DateTime t) {
-  var best = points.first;
-  var bestDiff = best.time.difference(t).inMinutes.abs();
-  for (final p in points) {
-    final d = p.time.difference(t).inMinutes.abs();
-    if (d < bestDiff) {
-      best = p;
-      bestDiff = d;
-    }
-  }
-  return best;
-}
-
-String _dateKey(DateTime d) =>
-    '${d.year.toString().padLeft(4, '0')}-'
-    '${d.month.toString().padLeft(2, '0')}-'
-    '${d.day.toString().padLeft(2, '0')}';
-
-String _convertAmPmTo24Hour(String amPm) {
-  final parts = amPm.trim().split(' ');
-  final hm = parts[0].split(':');
-  int hour = int.parse(hm[0]);
-  final minute = hm[1];
-  final isPm = parts.length > 1 && parts[1].toUpperCase() == 'PM';
-  if (isPm && hour != 12) hour += 12;
-  if (!isPm && hour == 12) hour = 0;
-  return '${hour.toString().padLeft(2, '0')}:$minute';
+  var hour = int.parse(match.group(1)!);
+  final minute = int.parse(match.group(2)!);
+  final period = match.group(3)!;
+  if (period == 'AM' && hour == 12) hour = 0;
+  if (period == 'PM' && hour != 12) hour += 12;
+  return DateTime(reference.year, reference.month, reference.day, hour, minute);
 }

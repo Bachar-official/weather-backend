@@ -1,48 +1,44 @@
-import 'package:weather_backend/utils/utils.dart';
+import 'condition.dart';
 
 class Forecast {
-  final DateTime time;
-  final double temperatureC; // always °C
-  final int weatherCode;     // number code WWO
-  final String condition;    // localized string
+  final DateTime time;  
+  final double temperature; // Environment.units (C or F)
+  final Condition condition;
   final bool isDay;
 
   const Forecast({
     required this.time,
-    required this.temperatureC,
-    required this.weatherCode,
+    required this.temperature,
     required this.condition,
     required this.isDay,
   });
 
-  factory Forecast.fromWttrMap(
+  factory Forecast.fromMap(
     Map<String, dynamic> map, {
-    required DateTime date,
-    required String sunrise, // "HH:mm"
-    required String sunset,  // "HH:mm"
-    required String locale,
+    required bool metric,
   }) {
-    final timeInt = int.parse(map['time'] as String); // "0", "300", ...
-    final hour = timeInt ~/ 100;
-    final minute = timeInt % 100;
-    final dt = DateTime(date.year, date.month, date.day, hour, minute);
+    final temp = metric
+        ? (map['temp_c'] as num).toDouble()
+        : (map['temp_f'] as num).toDouble();
 
     return Forecast(
-      time: dt,
-      temperatureC: double.parse(map['tempC'] as String),
-      weatherCode: int.parse(map['weatherCode'] as String),
-      condition: Utils.pickLocalizedCondition(map, locale),
-      isDay: Utils.isDay(dt, sunrise, sunset),
+      time: DateTime.parse(map['time'] as String),
+      temperature: temp,
+      condition: Condition.fromMap(
+        map['condition'] as Map<String, dynamic>,
+      ),
+      isDay: map['is_day'] == 1,
     );
   }
 
-  /// [isMetric] определяет, в каких единицах отдавать температуру.
-  Map<String, dynamic> toMap({required bool isMetric}) => {
+  Map<String, dynamic> toMap() => {
         'time': time.toIso8601String(),
-        'temperature': isMetric ? temperatureC : temperatureC * 9 / 5 + 32,
-        'temperatureUnit': isMetric ? '°C' : '°F',
-        'weatherCode': weatherCode,
-        'condition': condition,
+        'temperature': temperature,
+        'code': condition.code,
         'isDay': isDay,
       };
+
+  @override
+  String toString() =>
+      'Forecast(time: $time, temperature: $temperature, code: ${condition.code}, isDay: $isDay)';
 }
