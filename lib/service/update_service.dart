@@ -86,9 +86,12 @@ class UpdateService {
   }
 
   Response _backgroundHandler(Request request) {
+    if (!environment.isCloudflareFeaturesEnabled) {
+      return Response.forbidden(jsonEncode({'Error': 'Feature is disabled'}));
+    }
     if (background == null) {
       return Response.internalServerError(
-        body: {'Error': 'Background is null'},
+        body: jsonEncode({'Error': 'Background is null'}),
       );
     }
     return Response.ok(background!, headers: {'Content-type': 'image/jpeg'});
@@ -134,7 +137,7 @@ class UpdateService {
         buildWeatherPrompt(
           date: DateTime.now(),
           temperature: weather?.temperature ?? 0,
-          conditionRu: weather?.condition.text ?? '',
+          conditionCode: weather?.condition.code ?? 0,
           city: environment.city,
           region: environment.area ?? '',
           sunrise: Utils.formatTimeAmPm(weather!.sunrise),

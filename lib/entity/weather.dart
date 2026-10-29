@@ -13,6 +13,7 @@ class Weather {
 
   /// Скорость ветра в единицах, заданных [Environment.units] (км/ч или мили/ч)
   final double windSpeed;
+
   /// Направление ветра в градусах (0–360)
   final int windDegree;
 
@@ -46,8 +47,9 @@ class Weather {
     final current = map['current'] as Map<String, dynamic>;
     final forecastData = map['forecast'] as Map<String, dynamic>;
     final forecastDays = forecastData['forecastday'] as List;
-    final astro = (forecastDays.first as Map<String, dynamic>)['astro']
-        as Map<String, dynamic>;
+    final astro =
+        (forecastDays.first as Map<String, dynamic>)['astro']
+            as Map<String, dynamic>;
 
     final metric = env.isMetric;
 
@@ -106,23 +108,24 @@ class Weather {
   }
 
   Map<String, dynamic> toMap() => {
-        'temperature': temperature,
-        'apparentTemperature': apparentTemperature,
-        'humidity': humidity,
-        'surfacePressure': surfacePressure,
-        'uvIndex': uvIndex,
-        'windSpeed': windSpeed,
-        'windDegree': windDegree,
-        'code': condition.code,
-        'condition': condition.text,
-        'isDay': isDay,
-        'sunrise': sunrise.toIso8601String(),
-        'sunset': sunset.toIso8601String(),
-        'forecast': forecast.map((f) => f.toMap()).toList(),
-      };
+    'temperature': temperature,
+    'apparentTemperature': apparentTemperature,
+    'humidity': humidity,
+    'surfacePressure': surfacePressure,
+    'uvIndex': uvIndex,
+    'windSpeed': windSpeed,
+    'windDegree': windDegree,
+    'code': condition.code,
+    'condition': condition.text,
+    'isDay': isDay,
+    'sunrise': sunrise.toIso8601String(),
+    'sunset': sunset.toIso8601String(),
+    'forecast': forecast.map((f) => f.toMap()).toList(),
+  };
 
   @override
-  String toString() => 'Weather:\n'
+  String toString() =>
+      'Weather:\n'
       'temperature: $temperature\n'
       'apparentTemperature: $apparentTemperature\n'
       'humidity: $humidity\n'

@@ -31,7 +31,13 @@ class NetRepo {
   }
 
   Future<Weather> getWeather() async {
-    final response = await _dio.get(Constants.weatherUrl(city: env.city, locale: env.locale, apiKey: env.weatherApiToken));
+    final response = await _dio.get(
+      Constants.weatherUrl(
+        city: env.city,
+        locale: env.locale,
+        apiKey: env.weatherApiToken,
+      ),
+    );
     if (response.statusCode == 200) {
       final map = response.data as Map<String, dynamic>;
       return Weather.fromMap(map, env: env);
@@ -49,7 +55,6 @@ class NetRepo {
   }
 
   Future<Uint8List?> getCloudflareImage(String prompt) async {
-    print(prompt);
     final response = await _dio.post(
       Constants.cloudflareAiUrl(env.cloudflareAccountId!),
       options: Options(
@@ -58,10 +63,8 @@ class NetRepo {
           'Content-Type': 'application/json',
         },
       ),
-      data: {
-        'prompt': prompt,
-      },
-    );    
+      data: {'prompt': prompt},
+    );
 
     if (response.statusCode != 200 || response.data == null) {
       throw Exception('code ${response.statusCode}');
@@ -74,7 +77,7 @@ class NetRepo {
 
     try {
       return base64Decode(base64String);
-    } catch(e) {
+    } catch (e) {
       rethrow;
     }
   }

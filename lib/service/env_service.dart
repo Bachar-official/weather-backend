@@ -17,7 +17,7 @@ class EnvService {
   late final DotEnv _env;
 
   EnvService() {
-    _env = DotEnv(includePlatformEnvironment: true)..load();
+    _env = DotEnv()..load();
   }
 
   String _require(String field) {
@@ -28,16 +28,24 @@ class EnvService {
     return value;
   }
 
+  String? _value(String field) {
+    final value = _env[field];
+    if (value == 'null') {
+      return null;
+    }
+    return value;
+  }
+
   Environment getEnvironment() {
     final city = _require(_EnvFields.city);
     final locale = _require(_EnvFields.locale);
     final weatherApiToken = _require(_EnvFields.weatherApiToken);
     final units = _require(_EnvFields.units);
-    final cloudflareAccountId = _env[_EnvFields.cloudflareAccountId];
-    final cloudflareToken = _env[_EnvFields.cloudflareToken];
+    final cloudflareAccountId = _value(_EnvFields.cloudflareAccountId);
+    final cloudflareToken = _value(_EnvFields.cloudflareToken);
     final port = int.parse(_require(_EnvFields.port));
     final cronSchedule = _require(_EnvFields.cronSchedule);
-    final area = _env[_EnvFields.area];
+    final area = _value(_EnvFields.area);
 
     return Environment(
       city: city,

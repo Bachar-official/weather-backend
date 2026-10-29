@@ -4,3 +4,4 @@ export './weather.dart';
 export './holiday.dart';
 export './condition.dart';
 export './geomagnetic.dart';
+export './weather_condition.dart';

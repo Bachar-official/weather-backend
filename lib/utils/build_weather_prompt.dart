@@ -3,7 +3,7 @@ import '../entity/entity.dart';
 String buildWeatherPrompt({
   required DateTime date,
   required double temperature,
-  required String conditionRu,
+  required int conditionCode,
   required String city,
   required String region,
   required String sunrise,
@@ -15,98 +15,124 @@ String buildWeatherPrompt({
   final temp = _temperatureFragment(temperature);
   final holidayDecor = _holidayFragment(holidays);
 
-  // Усиление для ночи
-  final isNight = timeOfDay.contains('глубокая ночь') || timeOfDay.contains('сумерки');
-  
-  // Для ночи мы ИГНОРИРУЕМ "ясно" и "естественный свет", чтобы модель не рисовала день
-  final skyDesc = isNight 
-      ? 'тёмное ночное небо, звёзды' 
-      : '$conditionRu, естественный свет';
+  final isNight =
+      timeOfDay.contains('deep night') || timeOfDay.contains('twilight');
+
+  final weatherCondition = WeatherCondition.fromCode(conditionCode);
+  final conditionEn = weatherCondition.getCondition(isNight);
+
+  final skyDesc = isNight
+      ? 'dark night sky, visible stars'
+      : '$conditionEn, natural lighting';
 
   final nightBoost = isNight
-      ? 'Ночная атмосфера: тёплые огни окон и фонарей. '
+      ? 'Night atmosphere: warm glow from windows and street lamps. '
       : '';
 
-  final lightDesc = isNight ? 'искусственный свет' : 'естественный свет';
+  final lightDesc = isNight ? 'artificial lighting' : 'natural daylight';
 
   final camera = isNight
-      ? 'Снято на Fujifilm X-T5, 23mm f/2, длинная выдержка.' // убрали "огни города"
-      : 'Снято на Fujifilm X-T5, 23mm f/2, дневной свет.';
+      ? 'Shot on Fujifilm X-T5, 23mm f/2, long exposure, cinematic night photography.'
+      : 'Shot on Fujifilm X-T5, 23mm f/2, bright daylight, sharp focus.';
 
-  return 'Фотореалистичный широкий план городской улицы в городе $city, $region. '
-      'Небо занимает верхнюю половину кадра: $skyDesc. '
+  return 'Photorealistic wide shot of a city street in $city, $region. '
+      'The sky occupies the upper half of the frame: $skyDesc. '
       '$timeOfDay, $season, $temp. '
       '$nightBoost'
       '$holidayDecor'
-      'Архитектура города, улицы, $lightDesc, глубина кадра, '
-      'свободное пространство в центре для UI-виджета. '
+      'Urban architecture, streets, $lightDesc, depth of field, '
+      'clean negative space in the center for UI widget overlay. '
       '$camera';
 }
 
-// ---------- Праздники ----------
-// (оставляем без изменений, как в прошлый раз)
+// ---------- Holidays ----------
 String _holidayFragment(List<Holiday> holidays) {
   if (holidays.isEmpty) return '';
   final ruHoliday = holidays.firstWhere(
-    (h) => h.text.toLowerCase().contains('россия') || h.text.toLowerCase().contains('рф'),
+    (h) =>
+        h.text.toLowerCase().contains('россия') ||
+        h.text.toLowerCase().contains('рф'),
     orElse: () => const Holiday(''),
   );
   if (ruHoliday.text.isEmpty) return '';
 
-  final name = ruHoliday.text.replaceAll(RegExp(r'Россия\s*—\s*', caseSensitive: false), '').trim();
+  final name = ruHoliday.text
+      .replaceAll(RegExp(r'Россия\s*—\s*', caseSensitive: false), '')
+      .trim();
   final lower = name.toLowerCase();
 
   String decor;
   if (lower.contains('новый год') || lower.contains('рождеств')) {
-    decor = 'новогодние гирлянды, украшенные витрины, снежинки, тёплые огни';
+    decor =
+        'New Year garlands, decorated shop windows, snowflakes, warm festive lights';
   } else if (lower.contains('победы') || lower.contains('9 мая')) {
-    decor = 'георгиевские ленты, красные флаги, праздничные баннеры, весенние цветы';
+    decor = 'St. George ribbons, red flags, festive spring banners';
   } else if (lower.contains('8 марта') || lower.contains('женск')) {
-    decor = 'весенние тюльпаны, мимозы, поздравительные баннеры';
+    decor = 'spring tulips, mimosa flowers, festive street banners';
   } else if (lower.contains('23 февраля') || lower.contains('защитник')) {
-    decor = 'флаги, сдержанные праздничные баннеры';
+    decor = 'subtle festive banners, patriotic colors';
   } else if (lower.contains('день россии') || lower.contains('12 июня')) {
-    decor = 'флаги России, триколоры, праздничные баннеры';
+    decor = 'Russian tricolor flags, festive street banners';
   } else if (lower.contains('маслениц')) {
-    decor = 'ярмарочные палатки, блины, народные гуляния';
+    decor = 'festive market stalls, traditional folk decorations';
   } else {
-    decor = 'тематические баннеры и флаги на улице';
+    decor = 'thematic festive banners and flags on the street';
   }
-  return 'Улица оформлена к празднику «$name»: $decor. ';
+  return 'The street is decorated for the holiday "$name": $decor. ';
 }
 
-// ---------- Сезон ----------
+// ---------- Season ----------
 String _seasonFragment(int month) {
   switch (month) {
-    case 12: return 'начало зимы, снег на крышах';
-    case 1:  return 'зима в самом разгаре, снег';
-    case 2:  return 'поздняя зима, снег';
-    case 3:  return 'ранняя весна, тающий снег, проталины';
-    case 4:  return 'весна в самом разгаре, зелёная листва';
-    case 5:  return 'поздняя весна, зелёные деревья';
-    case 6:  return 'раннее лето, зелёная листва';
-    case 7:  return 'лето в самом разгаре, густая зелёная листва';
-    case 8:  return 'позднее лето, зелёная листва';
-    case 9:  return 'ранняя осень, желтеющая листва';
-    case 10: return 'осень в самом разгаре, жёлтая и красная листва на деревьях, мокрый асфальт';
-    case 11: return 'поздняя осень, опавшая листва, голые ветки';
-    default: return 'нейтральные сезонные оттенки';
+    case 12:
+      return 'early winter, snow on roofs';
+    case 1:
+      return 'deep winter, heavy snow';
+    case 2:
+      return 'late winter, snowy landscape';
+    case 3:
+      return 'early spring, melting snow, first green patches';
+    case 4:
+      return 'mid spring, fresh green foliage';
+    case 5:
+      return 'late spring, lush green trees';
+    case 6:
+      return 'early summer, vibrant green foliage';
+    case 7:
+      return 'mid summer, dense green canopy';
+    case 8:
+      return 'late summer, green trees';
+    case 9:
+      return 'early autumn, yellowing leaves';
+    case 10:
+      return 'mid autumn, yellow and red foliage, wet asphalt';
+    case 11:
+      return 'late autumn, fallen leaves, bare branches';
+    default:
+      return 'neutral seasonal tones';
   }
 }
 
-// ---------- Время суток ----------
-String _timeOfDayFragment(int hour, int minute, String sunriseStr, String sunsetStr) {
+// ---------- Time ----------
+String _timeOfDayFragment(
+  int hour,
+  int minute,
+  String sunriseStr,
+  String sunsetStr,
+) {
   final currentMinutes = hour * 60 + minute;
   final sunriseMinutes = _parseTime(sunriseStr, 6, 0);
   final sunsetMinutes = _parseTime(sunsetStr, 18, 0);
 
-  if (currentMinutes < sunriseMinutes - 120) return 'глубокая ночь, тёмное небо, городские огни';
-  if (currentMinutes < sunriseMinutes) return 'предрассветные сумерки';
-  if (currentMinutes < sunriseMinutes + 120) return 'рассвет';
-  if (currentMinutes < sunsetMinutes - 120) return 'день';
-  if (currentMinutes < sunsetMinutes) return 'закат';
-  if (currentMinutes < sunsetMinutes + 120) return 'сумерки';
-  return 'глубокая ночь, тёмное небо, городские огни';
+  if (currentMinutes < sunriseMinutes - 120) {
+    return 'deep night, dark sky, city lights';
+  }
+  if (currentMinutes < sunriseMinutes) return 'pre-dawn twilight';
+  if (currentMinutes < sunriseMinutes + 120) return 'sunrise, morning glow';
+  if (currentMinutes < sunsetMinutes - 120) return 'daytime';
+  if (currentMinutes < sunsetMinutes) return 'sunset, golden hour';
+  if (currentMinutes < sunsetMinutes + 120) return 'dusk, evening twilight';
+  return 'deep night, dark sky, city lights';
 }
 
 int _parseTime(String timeStr, int defaultH, int defaultM) {
@@ -114,15 +140,17 @@ int _parseTime(String timeStr, int defaultH, int defaultM) {
   if (parts.length != 2) return defaultH * 60 + defaultM;
   final h = int.tryParse(parts[0]);
   final m = int.tryParse(parts[1]);
-  if (h == null || m == null || h < 0 || h > 23 || m < 0 || m > 59) return defaultH * 60 + defaultM;
+  if (h == null || m == null || h < 0 || h > 23 || m < 0 || m > 59) {
+    return defaultH * 60 + defaultM;
+  }
   return h * 60 + m;
 }
 
-// ---------- Температура ----------
+// ---------- Temperature ----------
 String _temperatureFragment(double t) {
-  if (t <= -5) return 'мороз';
-  if (t <= 5)  return 'холодно';
-  if (t <= 14) return 'прохладно';
-  if (t <= 22) return 'тепло';
-  return 'жарко';
+  if (t <= -5) return 'freezing cold';
+  if (t <= 5) return 'cold';
+  if (t <= 14) return 'cool';
+  if (t <= 22) return 'warm';
+  return 'hot';
 }

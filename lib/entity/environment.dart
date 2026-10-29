@@ -22,5 +22,11 @@ class Environment {
   });
 
   bool get isMetric => units == 'metric';
-  bool get isCloudflareFeaturesEnabled => cloudflareAccountId != null && cloudflareAccountId != null && area != null;
+  bool get isCloudflareFeaturesEnabled =>
+      cloudflareAccountId != null &&
+      cloudflareAccountId != 'null' &&
+      cloudflareToken != null &&
+      cloudflareToken != 'null' &&
+      area != null &&
+      area != 'null';
 }
