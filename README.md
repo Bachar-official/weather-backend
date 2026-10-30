@@ -88,12 +88,7 @@ dart compile exe bin/server.dart
 ```
 
 ## API Endpoints
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | /weather | Returns current weather data |
-| GET | /holidays | Returns a list of today's holidays |
-| GET | /geomagnetic | Returns the current NOAA Planetary K-index data |
-| GET | /background | Returns a dynamically generated image/jpeg background. (Returns 403 if Cloudflare features are disabled).
+Described in Swagger, accessible via the `/swagger` endpoint
 
 ## Contributing
 Contributions are welcome! If you'd like to add a new data source, improve the prompt engineering logic, or optimize the caching mechanism:

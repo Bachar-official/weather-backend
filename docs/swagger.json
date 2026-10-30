@@ -1,0 +1,180 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Weather Backend",
+    "description": "Real-time weather, local holidays, geomagnetic activity, and AI-generated contextual backgrounds tailored to the current conditions.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/weather": {
+      "get": {
+        "summary": "Get current weather and 12-hour forecast",
+        "operationId": "getWeather",
+        "responses": {
+          "200": {
+            "description": "Weather and forecast data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "temperature": { "type": "number", "description": "Current temperature" },
+                    "apparentTemperature": { "type": "number", "description": "Feels like temperature" },
+                    "humidity": { "type": "number", "description": "Humidity percentage" },
+                    "surfacePressure": { "type": "number", "description": "Surface pressure (hPa or inHg)" },
+                    "uvIndex": { "type": "number", "description": "UV index" },
+                    "windSpeed": { "type": "number", "description": "Wind speed (km/h or mph)" },
+                    "windDegree": { "type": "integer", "description": "Wind direction in degrees (0-360)" },
+                    "code": { "type": "integer", "description": "Weather condition code" },
+                    "condition": { "type": "string", "description": "Weather condition text description" },
+                    "isDay": { "type": "boolean", "description": "Indicates if it is currently daytime" },
+                    "sunrise": { "type": "string", "format": "date-time", "description": "Sunrise time in ISO 8601" },
+                    "sunset": { "type": "string", "format": "date-time", "description": "Sunset time in ISO 8601" },
+                    "forecast": {
+                      "type": "array",
+                      "description": "12-hour hourly forecast",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "time": { "type": "string", "format": "date-time" },
+                          "temperature": { "type": "number" },
+                          "code": { "type": "integer" },
+                          "isDay": { "type": "boolean" }
+                        },
+                        "required": ["time", "temperature", "code", "isDay"]
+                      }
+                    }
+                  },
+                  "required": [
+                    "temperature", "apparentTemperature", "humidity", "surfacePressure",
+                    "uvIndex", "windSpeed", "windDegree", "code", "condition", "isDay",
+                    "sunrise", "sunset", "forecast"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error (e.g., weather data is not yet initialized)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Error": { "type": "string", "example": "Weather is null" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/holidays": {
+      "get": {
+        "summary": "Get current local holidays",
+        "operationId": "getHolidays",
+        "responses": {
+          "200": {
+            "description": "List of current local holidays",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "text": { "type": "string", "description": "Holiday name or description" }
+                    },
+                    "required": ["text"]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/geomagnetic": {
+      "get": {
+        "summary": "Get current geomagnetic activity (Planetary K-index)",
+        "operationId": "getGeomagnetic",
+        "responses": {
+          "200": {
+            "description": "Geomagnetic activity data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "date": { "type": "string", "format": "date-time", "description": "Date of the measurement" },
+                    "kp": { "type": "number", "description": "Planetary K-index value" }
+                  },
+                  "required": ["date", "kp"]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error (e.g., geomagnetic data is not yet initialized)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Error": { "type": "string", "example": "Geomagnetic is null" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/background": {
+      "get": {
+        "summary": "Get AI-generated contextual background image",
+        "operationId": "getBackground",
+        "responses": {
+          "200": {
+            "description": "JPEG image of the generated background",
+            "content": {
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (Cloudflare features are disabled in environment)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Error": { "type": "string", "example": "Feature is disabled" }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error (e.g., background image is not yet generated)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Error": { "type": "string", "example": "Background is null" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
