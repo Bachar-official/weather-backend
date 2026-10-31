@@ -1,6 +1,7 @@
 # Weather Backend
 
 [![Dart](https://img.shields.io/badge/Dart-3.12+-00579D?logo=dart)](https://dart.dev)
+[![Docker Ready](https://img.shields.io/badge/Docker-Ready-2CA5E0?logo=docker&logoColor=white)](https://www.docker.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A high-performance, lightweight calendar and weather backend written in Dart. Designed to power dynamic frontend widgets, it aggregates real-time weather, local holidays, geomagnetic activity, and **AI-generated contextual backgrounds** tailored to the current conditions.
@@ -37,21 +38,19 @@ The application is built with a clean, layered architecture:
 - **Scheduling**: `cron`
 - **Configuration**: `dotenv`
 - **Logging**: `logger`
-- **Deployment**: Docker (not tested yet)
+- **Deployment**: Docker
 
 ---
 
 ## Installation & Setup
 
-### 1. Clone the repository
+1. Clone the repository:
 ```bash
 git clone https://github.com/Bachar-official/weather-backend.git
 cd weather-backend
 ```
 
-### 2. Configure Environment variables
-
-Create a `.env` file in the root directory based on `.env.example`:
+2. Configure Environment variables: Create a `.env` file in the root directory based on `.env.example`
 ```env
 # Your city here (Required)
 CITY=Moscow
@@ -71,24 +70,54 @@ PORT=8080
 # How often to request the weather (by default, every 15 minutes)
 CRON_SCHEDULE=*/15 * * * *
 ```
+> [!IMPORTANT]
+> Ensure the PORT variable has no spaces or quotes (e.g., `PORT=8080`, not `PORT = 8080` or `PORT="8080"`), so Docker Compose can read it correctly for port mapping.
 
-### 3. Install dependencies
+### Option A: Docker
+
+This is the easiest way to run the backend. It handles AOT compilation, dependencies, and auto-restarts automatically.
+
+#### 1. Build and run:
+```bash
+docker-compose up -d --build
+```
+*(Note: If you are using a newer Docker version, the command might be docker compose up -d --build without the hyphen).*
+
+#### 2. Manage the Service:
+- View logs: `docker-compose logs -f`
+- Stop the service: `docker-compose stop`
+- Update after git pull: `docker-compose up -d --build`
+- Completely remove: `docker-compose down`
+
+### Option B: Local Development (Native Dart)
+
+> [!IMPORTANT]
+> Please ensure you have Dart SDK installed.
+
+If you want to run or develop the project locally without Docker:
+
+### 1. Install dependencies
 ```bash
 dart pub get
 ```
 
-## Running the Project
+### 2. Running the Project in DEBUG mode
 ```bash
 dart run bin/server.dart
 ```
 
-## Building executable
+### 3. Building executable
 ```bash
 dart compile exe bin/server.dart
 ```
 
 ## API Endpoints
-Described in Swagger, accessible via the `/swagger` endpoint
+The API is fully documented with Swagger. Once the server is running, you can access the interactive documentation at:
+
+```text
+http://<your-host-ip>:<PORT>/swagger
+```
+*(Replace <PORT> with the value from your .env file, default is 8080).*
 
 ## Contributing
 Contributions are welcome! If you'd like to add a new data source, improve the prompt engineering logic, or optimize the caching mechanism:

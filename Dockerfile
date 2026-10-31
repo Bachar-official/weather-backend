@@ -8,14 +8,22 @@ RUN dart pub get
 
 # Copy app source code (except anything in .dockerignore) and AOT compile app.
 COPY . .
-RUN dart build cli --target bin/server.dart -o output
+RUN dart compile exe bin/server.dart -o server
 
-# Build minimal serving image from AOT-compiled `/server`
-# and the pre-built AOT-runtime in the `/runtime/` directory of the base image.
-FROM scratch
-COPY --from=build /runtime/ /
-COPY --from=build /app/output/bundle/ /app/
+# Run stage
+FROM debian:bookworm-slim
 
-# Start server.
+# Install root sertificates
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy compiled server from build stage
+COPY --from=build /app/server /app/server
+COPY --from=build /app/docs /app/docs
+
 EXPOSE 8080
-CMD ["/app/bin/server"]
+
+CMD ["/app/server"]

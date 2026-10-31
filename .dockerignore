@@ -1,0 +1,12 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+README.md
+CHANGELOG.md
+LICENSE
+test/
+.vscode/
+.dart_tool/
+build/

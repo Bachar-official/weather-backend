@@ -1,0 +1,14 @@
+services:
+  weather-backend:
+    build: .
+    container_name: weather-backend
+    restart: unless-stopped # Autorestart
+    ports:
+      # Takes PORT variable from .env file. If not present, use 8080 by default.
+      # Format: "PC_PORT:CONTAINER_PORT"
+      - "${PORT:-8080}:${PORT:-8080}"
+    environment:
+      - TZ=Europe/Moscow # IDK why, but it's required
+    volumes:
+      # Send .env from host to container (readonly)
+      - ./.env:/app/.env:ro
