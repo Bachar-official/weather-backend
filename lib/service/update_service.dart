@@ -140,6 +140,7 @@ class UpdateService {
           conditionCode: weather?.condition.code ?? 0,
           city: environment.city,
           region: environment.area ?? '',
+          countryName: environment.country,
           sunrise: Utils.formatTimeAmPm(weather!.sunrise),
           sunset: Utils.formatTimeAmPm(weather!.sunset),
         ),
