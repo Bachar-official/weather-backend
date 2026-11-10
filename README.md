@@ -69,6 +69,8 @@ UNITS=metric
 PORT=8080
 # How often to request the weather (by default, every 15 minutes)
 CRON_SCHEDULE=*/15 * * * *
+# Localized country name for Wikipedia parsing (optional)
+COUNTRY=Россия
 ```
 > [!IMPORTANT]
 > Ensure the PORT variable has no spaces or quotes (e.g., `PORT=8080`, not `PORT = 8080` or `PORT="8080"`), so Docker Compose can read it correctly for port mapping.
@@ -118,6 +120,30 @@ The API is fully documented with Swagger. Once the server is running, you can ac
 http://<your-host-ip>:<PORT>/swagger
 ```
 *(Replace <PORT> with the value from your .env file, default is 8080).*
+
+## WebSocket feature
+It is also possible to request data via WebSocket for instant synchronization of weather conditions and time.
+
+### Endpoint: /ws
+
+Message types:
+1. `update` - Full state update (sent on connection and when data changes).
+```json
+{
+  "type": "update",
+  "weather": { ... },
+  "holidays": [...],
+  "geomagnetic": { ... },
+  "backgroundHash": 12345
+}
+```
+2. `time` - Lightweight time update (sent every minute)
+```json
+{
+  "type": "time",
+  "timestamp": "2026-11-10T14:31:00.000Z"
+}
+```
 
 ## Contributing
 Contributions are welcome! If you'd like to add a new data source, improve the prompt engineering logic, or optimize the caching mechanism:
