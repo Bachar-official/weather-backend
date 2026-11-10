@@ -8,6 +8,7 @@ class Environment {
   final String cronSchedule;
   final String weatherApiToken;
   final int port;
+  final String? country;
 
   const Environment({
     required this.city,
@@ -16,6 +17,7 @@ class Environment {
     this.cloudflareAccountId,
     this.cloudflareToken,
     this.area,
+    this.country,
     required this.port,
     required this.cronSchedule,
     required this.weatherApiToken,

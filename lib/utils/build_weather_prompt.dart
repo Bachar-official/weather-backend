@@ -9,11 +9,13 @@ String buildWeatherPrompt({
   required String sunrise,
   required String sunset,
   List<Holiday> holidays = const [],
+  String? countryName,
 }) {
   final season = _seasonFragment(date.month);
   final timeOfDay = _timeOfDayFragment(date.hour, date.minute, sunrise, sunset);
   final temp = _temperatureFragment(temperature);
-  final holidayDecor = _holidayFragment(holidays);
+
+  final holidayDecor = _holidayFragment(holidays, countryName);
 
   final isNight =
       timeOfDay.contains('deep night') || timeOfDay.contains('twilight');
@@ -21,19 +23,35 @@ String buildWeatherPrompt({
   final weatherCondition = WeatherCondition.fromCode(conditionCode);
   final conditionEn = weatherCondition.getCondition(isNight);
 
+  final isBadWeather =
+      conditionEn.toLowerCase().contains('rain') ||
+      conditionEn.toLowerCase().contains('drizzle') ||
+      conditionEn.toLowerCase().contains('snow') ||
+      conditionEn.toLowerCase().contains('overcast') ||
+      conditionEn.toLowerCase().contains('cloudy') ||
+      conditionEn.toLowerCase().contains('fog') ||
+      conditionEn.toLowerCase().contains('mist') ||
+      conditionEn.toLowerCase().contains('storm');
+
   final skyDesc = isNight
       ? 'dark night sky, visible stars'
-      : '$conditionEn, natural lighting';
+      : (isBadWeather
+            ? '$conditionEn, overcast gray sky, diffused soft lighting, wet surfaces'
+            : '$conditionEn, natural lighting');
 
   final nightBoost = isNight
       ? 'Night atmosphere: warm glow from windows and street lamps. '
       : '';
 
-  final lightDesc = isNight ? 'artificial lighting' : 'natural daylight';
+  final lightDesc = isNight
+      ? 'artificial lighting'
+      : (isBadWeather ? 'soft diffused daylight' : 'natural daylight');
 
   final camera = isNight
       ? 'Shot on Fujifilm X-T5, 23mm f/2, long exposure, cinematic night photography.'
-      : 'Shot on Fujifilm X-T5, 23mm f/2, bright daylight, sharp focus.';
+      : (isBadWeather
+            ? 'Shot on Fujifilm X-T5, 23mm f/2, soft overcast daylight, moody atmosphere, sharp focus.'
+            : 'Shot on Fujifilm X-T5, 23mm f/2, bright daylight, sharp focus.');
 
   return 'Photorealistic wide shot of a city street in $city, $region. '
       'The sky occupies the upper half of the frame: $skyDesc. '
@@ -46,39 +64,26 @@ String buildWeatherPrompt({
 }
 
 // ---------- Holidays ----------
-String _holidayFragment(List<Holiday> holidays) {
+String _holidayFragment(List<Holiday> holidays, String? countryName) {
   if (holidays.isEmpty) return '';
-  final ruHoliday = holidays.firstWhere(
-    (h) =>
-        h.text.toLowerCase().contains('россия') ||
-        h.text.toLowerCase().contains('рф'),
-    orElse: () => const Holiday(''),
-  );
-  if (ruHoliday.text.isEmpty) return '';
 
-  final name = ruHoliday.text
-      .replaceAll(RegExp(r'Россия\s*—\s*', caseSensitive: false), '')
-      .trim();
-  final lower = name.toLowerCase();
-
-  String decor;
-  if (lower.contains('новый год') || lower.contains('рождеств')) {
-    decor =
-        'New Year garlands, decorated shop windows, snowflakes, warm festive lights';
-  } else if (lower.contains('победы') || lower.contains('9 мая')) {
-    decor = 'St. George ribbons, red flags, festive spring banners';
-  } else if (lower.contains('8 марта') || lower.contains('женск')) {
-    decor = 'spring tulips, mimosa flowers, festive street banners';
-  } else if (lower.contains('23 февраля') || lower.contains('защитник')) {
-    decor = 'subtle festive banners, patriotic colors';
-  } else if (lower.contains('день россии') || lower.contains('12 июня')) {
-    decor = 'Russian tricolor flags, festive street banners';
-  } else if (lower.contains('маслениц')) {
-    decor = 'festive market stalls, traditional folk decorations';
-  } else {
-    decor = 'thematic festive banners and flags on the street';
+  // Пытаемся найти праздник, специфичный для указанной страны
+  Holiday targetHoliday = holidays.first;
+  if (countryName != null && countryName.isNotEmpty) {
+    final matched = holidays.firstWhere(
+      (h) => h.text.toLowerCase().contains(countryName.toLowerCase()),
+      orElse: () => const Holiday(''),
+    );
+    if (matched.text.isNotEmpty) {
+      targetHoliday = matched;
+    }
   }
-  return 'The street is decorated for the holiday "$name": $decor. ';
+
+  final cleanName = targetHoliday.text.split(RegExp(r'[—:]')).last.trim();
+
+  if (cleanName.isEmpty) return '';
+
+  return 'The street atmosphere and subtle visual elements reflect the local holiday: "$cleanName". ';
 }
 
 // ---------- Season ----------
