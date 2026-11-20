@@ -28,6 +28,7 @@ void main() async {
     logger: logger,
     onDataUpdated: wsManager.broadcast,
     onTimeTick: wsManager.broadcastTime,
+    onUpdateTick: wsManager.broadcastRefresh,
   );
 
   final weatherRouter = WeatherRouter(cache);

@@ -144,6 +144,12 @@ Message types:
   "timestamp": "2026-11-10T14:31:00.000Z"
 }
 ```
+3. `refresh` - Signal for frontend to refresh page because WebSocket can be outdated
+```json
+{
+  "type": "refresh"
+}
+```
 
 ## Contributing
 Contributions are welcome! If you'd like to add a new data source, improve the prompt engineering logic, or optimize the caching mechanism:

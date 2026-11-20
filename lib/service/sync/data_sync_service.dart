@@ -16,6 +16,7 @@ class DataSyncService {
 
   final Function _onDataUpdated; // WsManager callback notification
   final Function _onTimeTick;
+  final Function _onUpdateTick;
 
   DataSyncService({
     required this._cache,
@@ -24,6 +25,7 @@ class DataSyncService {
     required this._logger,
     required this._onDataUpdated,
     required this._onTimeTick,
+    required this._onUpdateTick,
   }) {
     _init();
 
@@ -36,6 +38,10 @@ class DataSyncService {
 
     _cron.schedule(Schedule.parse('0 0 * * *'), () async {
       await _updateHolidays();
+    });
+
+    _cron.schedule(Schedule.parse('0 3 * * *'), () {
+      _onUpdateTick();
     });
 
     _cron.schedule(Schedule.parse('* * * * *'), () {

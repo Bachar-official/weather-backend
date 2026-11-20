@@ -46,11 +46,23 @@ class WsManager {
     'timestamp': DateTime.now().toIso8601String(),
   });
 
+  final refreshPayload = jsonEncode({
+    'type': 'refresh',
+  });
+
   void broadcastTime() {
     if (_clients.isEmpty) return;
 
     for (final client in _clients) {
       client.sink.add(timePayload);
+    }
+  }
+
+  void broadcastRefresh() {
+    if (_clients.isEmpty) return;
+
+    for (final client in _clients) {
+      client.sink.add(refreshPayload);
     }
   }
 }
