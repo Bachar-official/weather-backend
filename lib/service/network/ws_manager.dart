@@ -19,7 +19,7 @@ class WsManager {
         _clients.add(webSocket);
         _logger.d('WS connected. Clients: ${_clients.length}');
         webSocket.sink.add(_cache.buildUpdatePayload());
-        webSocket.sink.add(timePayload);
+        broadcastTime();
         webSocket.stream.listen(
           (_) {},
           onDone: () {
@@ -41,25 +41,23 @@ class WsManager {
     }
   }
 
-  final timePayload = jsonEncode({
-    'type': 'time',
-    'timestamp': DateTime.now().toIso8601String(),
-  });
-
-  final refreshPayload = jsonEncode({
-    'type': 'refresh',
-  });
-
   void broadcastTime() {
     if (_clients.isEmpty) return;
 
+    final payload = jsonEncode({
+      'type': 'time',
+      'timestamp': DateTime.now().toIso8601String(),
+    });
+
     for (final client in _clients) {
-      client.sink.add(timePayload);
+      client.sink.add(payload);
     }
   }
 
   void broadcastRefresh() {
     if (_clients.isEmpty) return;
+
+    final refreshPayload = jsonEncode({'type': 'refresh'});
 
     for (final client in _clients) {
       client.sink.add(refreshPayload);

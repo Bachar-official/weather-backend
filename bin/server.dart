@@ -21,7 +21,7 @@ void main() async {
 
   final wsManager = WsManager(cache, logger);
 
-  DataSyncService(
+  final _ = DataSyncService(
     cache: cache,
     netRepo: netRepo,
     env: env,
